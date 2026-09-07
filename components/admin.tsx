@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { PasswordField } from "./password-field";
-import { StorageStatus } from "./storage-status";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, type FormEvent } from "react";
@@ -164,12 +163,10 @@ export function Dashboard({
   initialProducts,
   initialEnquiries,
   domain,
-  storageReady,
 }: {
   initialProducts: Product[];
   initialEnquiries: Enquiry[];
   domain: string | null;
-  storageReady: boolean;
 }) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
@@ -448,7 +445,6 @@ export function Dashboard({
           </div>
         </header>
         <div className="admin-content">
-          <StorageStatus ready={storageReady} />
           <div className="admin-title">
             <div>
               <span className="eyebrow" style={{ marginBottom: 9 }}>
