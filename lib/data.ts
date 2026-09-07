@@ -8,6 +8,9 @@ export type Product = {
   description: Bilingual;
   stages: Bilingual;
   available: boolean;
+  image?: string;
+  family?: string;
+  pelletSize?: string;
 };
 export const categories: {
   id: Category;

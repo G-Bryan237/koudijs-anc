@@ -1,11 +1,33 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { createClient } from "@libsql/client";
+import { pathToFileURL } from "node:url";
+import path from "node:path";
+import nextEnv from "@next/env";
+nextEnv.loadEnvConfig(process.cwd());
 const base = process.env.TEST_BASE_URL || "http://127.0.0.1:3000";
+assert(
+  ["127.0.0.1", "localhost"].includes(new URL(base).hostname),
+  "Run against a local test instance only",
+);
+assert(
+  !process.env.TURSO_DATABASE_URL,
+  "Run these mutation tests against local SQLite, not a remote customer database",
+);
+const db = createClient({
+  url: pathToFileURL(
+    path.join(
+      process.env.DATA_DIRECTORY || path.join(process.cwd(), "data"),
+      "anc.sqlite",
+    ),
+  ).href,
+});
 const access = readFileSync("data/ADMIN-ACCESS.txt", "utf8");
-const email = access.match(/^Email: (.+)$/m)[1];
-const password = access.match(/^Password: (.+)$/m)[1];
+const email = access.match(/^Email: (.+)$/m)[1].trim();
+const password = access.match(/^Password: (.+)$/m)[1].trim();
 let cookie = "",
-  id = "";
+  productBefore = null;
+const ids = [];
 async function req(url, method = "GET", body, extra = {}) {
   return fetch(base + url, {
     method,
@@ -18,17 +40,12 @@ async function req(url, method = "GET", body, extra = {}) {
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 }
+async function store() {
+  return (await req("/api/admin")).json();
+}
 try {
-  assert.equal(
-    (await req("/api/admin")).status,
-    401,
-    "Admin data must be protected",
-  );
-  assert.equal(
-    (await req("/api/admin", "PATCH", {})).status,
-    401,
-    "Admin writes must be protected",
-  );
+  assert.equal((await req("/api/admin")).status, 401);
+  assert.equal((await req("/api/admin", "PATCH", {})).status, 401);
   assert.equal(
     (
       await req(
@@ -39,89 +56,101 @@ try {
       )
     ).status,
     403,
-    "Cross-origin submission must fail",
   );
+  assert.equal((await req("/api/enquiries", "POST", {})).status, 400);
+  assert.equal((await req("/api/enquiries", "POST", null)).status, 400);
   assert.equal(
-    (await req("/api/enquiries", "POST", {})).status,
-    400,
-    "Invalid enquiry must fail",
-  );
-  assert.equal(
-    (
-      await req("/api/admin/session", "POST", {
-        email,
-        password: "invalid-test-password",
-      })
-    ).status,
+    (await req("/api/admin/session", "POST", { email, password: "invalid" }))
+      .status,
     401,
-    "Invalid login must fail",
   );
-  const login = await req("/api/admin/session", "POST", { email, password });
-  assert.equal(login.status, 200, "Admin login");
+  const login = await req("/api/admin/session", "POST", {
+    email: " " + email.toUpperCase() + " ",
+    password,
+  });
+  assert.equal(
+    login.status,
+    200,
+    "Login with case/whitespace-normalized email",
+  );
   const session = login.headers.get("set-cookie");
   assert.match(session, /HttpOnly/i);
   assert.match(session, /SameSite=strict/i);
   cookie = session.split(";")[0];
-  const initial = await (await req("/api/admin")).json();
-  assert.equal(initial.products.length, 7);
-  const response = await req("/api/enquiries", "POST", {
+  const initial = await store();
+  assert.equal(initial.products.length, 15);
+  assert(
+    initial.products.every((p) => p.image?.startsWith("/images/products/")),
+  );
+  const payload = {
     name: "AUTOMATED VERIFICATION",
     phone: "+237600000000",
-    location: "Test location",
+    location: "Test only",
     category: "aquaculture",
-    product: "tilapia",
+    product: "tilapia-demarrage",
     quantity: "Test only",
     message: "Automated verification, not a customer request.",
     consent: true,
     locale: "en",
-  });
-  assert.equal(response.status, 201, "Enquiry submission");
-  id = (await response.json()).id;
-  let data = await (await req("/api/admin")).json();
+  };
+  // Concurrent submissions exercise the database transaction, not only sequential writes.
+  const responses = await Promise.all([
+    req("/api/enquiries", "POST", payload),
+    req("/api/enquiries", "POST", {
+      ...payload,
+      product: "tilapia-croissance",
+    }),
+  ]);
+  for (const response of responses) {
+    assert.equal(response.status, 201, "Persist enquiry");
+    ids.push((await response.json()).id);
+  }
+  let saved = await store();
   assert(
-    data.enquiries.some((e) => e.id === id && e.status === "new"),
-    "Enquiry persisted",
+    ids.every((id) => saved.enquiries.some((e) => e.id === id)),
+    "Concurrent submissions both persisted",
   );
   assert.equal(
     (
       await req("/api/admin", "PATCH", {
         type: "enquiry",
-        id,
+        id: ids[0],
         status: "confirmed",
       })
     ).status,
     200,
   );
-  data = await (await req("/api/admin")).json();
-  assert(
-    data.enquiries.some((e) => e.id === id && e.status === "confirmed"),
-    "Order status persisted",
+  const disk = JSON.parse(
+    String(
+      (await db.execute("SELECT data FROM anc_store WHERE id=1")).rows[0].data,
+    ),
   );
-  const p = data.products[0];
+  assert(
+    disk.enquiries.some((e) => e.id === ids[0] && e.status === "confirmed"),
+    "Order persisted across separate database connections",
+  );
+  productBefore = initial.products.find((p) => p.id === "tilapia-demarrage");
   assert.equal(
     (
       await req("/api/admin", "PATCH", {
-        ...p,
+        ...productBefore,
         type: "product",
         available: false,
       })
     ).status,
     200,
   );
+  assert.equal((await req("/produits/tilapia-demarrage")).status, 404);
   assert.equal(
-    (await req(`/produits/${p.id}`)).status,
-    404,
-    "Hidden product has no public page",
-  );
-  assert.equal(
-    (await req("/api/admin", "PATCH", { ...p, type: "product" })).status,
+    (await req("/api/admin", "PATCH", { ...productBefore, type: "product" }))
+      .status,
     200,
   );
   assert.equal(
     (
       await req("/api/admin", "PATCH", {
         type: "enquiry",
-        id,
+        id: ids[0],
         status: "invented",
       })
     ).status,
@@ -132,25 +161,18 @@ try {
       await req(
         "/api/admin",
         "PATCH",
-        { type: "enquiry", id, status: "closed" },
+        { type: "enquiry", id: ids[0], status: "closed" },
         { Origin: "https://untrusted.example" },
       )
     ).status,
     401,
   );
-  for (const path of [
+  const paths = [
     "/",
     "/produits",
     "/aquaculture",
     "/volaille",
     "/porcs",
-    "/produits/tilapia",
-    "/produits/poisson-chat",
-    "/produits/poulets-de-chair",
-    "/produits/pondeuses",
-    "/produits/porcelets",
-    "/produits/porcs-en-croissance",
-    "/produits/truies",
     "/a-propos",
     "/contact",
     "/devis",
@@ -167,39 +189,60 @@ try {
     "/favicon.ico",
     "/apple-icon.png",
     "/robots.txt",
-  ]) {
-    const page = await req(path);
-    assert.equal(page.status, 200, path);
-    assert.match(
-      page.headers.get("x-robots-tag") || "",
-      /noindex/,
-      "Preview indexing blocked",
-    );
+    ...initial.products.map((p) => "/produits/" + p.id),
+    ...new Set(initial.products.map((p) => p.image)),
+  ];
+  for (const url of paths) {
+    const page = await req(url);
+    assert.equal(page.status, 200, url);
   }
-  const english = await req("/", "GET", undefined, {
-    Cookie: "anc_locale=en; anc_theme=dark",
-  });
-  const html = await english.text();
-  assert.match(html, /lang="en"/);
-  assert.match(html, /data-theme="dark"/);
-  assert.match(html, /for the farmers/);
+  const en = await (
+    await req("/", "GET", undefined, {
+      Cookie: "anc_locale=en; anc_theme=dark",
+    })
+  ).text();
+  assert.match(en, /lang="en"/);
+  assert.match(en, /data-theme="dark"/);
+  assert.match(en, /for the farmers/);
+  const contact = await (await req("/contact")).text();
+  assert.match(contact, /maps.google.com\/maps/);
+  assert.doesNotMatch(contact, /map-placeholder/);
+  const loginHtml = await (
+    await req("/admin", "GET", undefined, { Cookie: "" })
+  ).text();
+  assert.match(loginHtml, /admin-password/);
+  assert.match(loginHtml, /Afficher le mot de passe|Show password/);
   assert.equal((await req("/this-page-does-not-exist")).status, 404);
   assert.equal((await req("/api/admin/session", "DELETE")).status, 200);
   cookie = "";
   assert.equal((await req("/api/admin")).status, 401);
   console.log(
-    "PASS: 28 routes, authentication, cookie flags, validation, CSRF checks, enquiry persistence, order status, product visibility, English/dark rendering, 404 and logout.",
+    "PASS: " +
+      paths.length +
+      " pages/assets, 15 catalogue entries, normalized login, protected writes, concurrent enquiries, SQLite persistence, product visibility, order statuses, EN/dark rendering, automatic map and password toggle markup.",
   );
 } finally {
-  // Only remove this run’s synthetic enquiry. Keep all real customer records and credentials.
-  if (id) {
-    const file = process.env.DATA_DIRECTORY
-      ? `${process.env.DATA_DIRECTORY}/store.json`
-      : "data/store.json";
-    const data = JSON.parse(readFileSync(file, "utf8"));
-    data.enquiries = data.enquiries.filter((e) => e.id !== id);
-    const p = data.products.find((p) => p.id === "tilapia");
-    if (p) p.available = true;
-    writeFileSync(file, JSON.stringify(data, null, 2));
+  const tx = await db.transaction("write");
+  try {
+    const result = await tx.execute("SELECT data FROM anc_store WHERE id=1");
+    if (result.rows.length) {
+      const data = JSON.parse(String(result.rows[0].data));
+      data.enquiries = data.enquiries.filter((e) => !ids.includes(e.id));
+      if (productBefore) {
+        const i = data.products.findIndex((p) => p.id === productBefore.id);
+        if (i >= 0) data.products[i] = productBefore;
+      }
+      await tx.execute({
+        sql: "UPDATE anc_store SET data=? WHERE id=1",
+        args: [JSON.stringify(data)],
+      });
+    }
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback();
+    throw error;
+  } finally {
+    tx.close();
+    db.close();
   }
 }

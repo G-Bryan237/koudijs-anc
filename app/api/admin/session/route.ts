@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import {
+  adminEmail,
   configured,
   createSession,
   limited,
@@ -14,7 +15,16 @@ export async function POST(request: Request) {
       { error: "Admin credentials have not been configured." },
       { status: 503 },
     );
-  if (limited(request, "login", 8))
+  let blocked: boolean;
+  try {
+    blocked = await limited(request, "login", 8);
+  } catch {
+    return Response.json(
+      { error: "Authentication service unavailable" },
+      { status: 503 },
+    );
+  }
+  if (blocked)
     return Response.json(
       { error: "Too many attempts. Try again in 15 minutes." },
       { status: 429 },
@@ -30,7 +40,8 @@ export async function POST(request: Request) {
   }
   if (
     typeof data?.password !== "string" ||
-    data.email !== process.env.ADMIN_EMAIL ||
+    typeof data.email !== "string" ||
+    data.email.trim().toLowerCase() !== adminEmail() ||
     !verifyPassword(data.password)
   )
     return Response.json({ error: "Invalid credentials" }, { status: 401 });

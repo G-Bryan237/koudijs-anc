@@ -336,7 +336,7 @@ export function Finder({ products }: { products: Product[] }) {
   const [stage, setStage] = useState("");
   const [result, setResult] = useState(false);
   const options = products.filter(
-    (p) => p.category === activity && p.available,
+    (p) => p.category === activity && p.available && !p.family,
   );
   const selected = options.find((p) => p.id === animal);
   return (
@@ -583,12 +583,15 @@ function ProductCard({ product: p }: { product: Product }) {
     <article className="product-card">
       <Link href={`/produits/${p.id}`} className="product-photo">
         <Image
-          src={c.image}
-          alt={c.animals[l]}
+          src={p.image || c.image}
+          alt={p.name[l]}
           fill
           sizes="(max-width: 700px) 100vw, 33vw"
         />
         <span className="product-brand">KOUDIJS</span>
+        {p.pelletSize && (
+          <span className="product-spec-chip">{p.pelletSize}</span>
+        )}
       </Link>
       <div className="product-card-body">
         <span className="eyebrow">{c.name[l]}</span>
@@ -633,18 +636,30 @@ export function ProductDetail({
       <section className="container product-detail">
         <div className="product-detail-image">
           <Image
-            src={c.image}
-            alt={c.animals[l]}
+            src={p.image || c.image}
+            alt={p.name[l]}
             fill
             sizes="(max-width: 800px) 100vw, 50vw"
           />
           <span className="product-brand">KOUDIJS</span>
+          <span className="product-image-note">
+            {t(
+              "Visuel extrait du flyer fourni. Emballage à confirmer à la commande.",
+              "Image extracted from the supplied flyer. Confirm packaging when ordering.",
+            )}
+          </span>
         </div>
         <div>
           <span className="eyebrow">{c.name[l]}</span>
           <h1>{p.name[l]}</h1>
           <p className="lead">{p.description[l]}</p>
           <dl className="product-specs">
+            {p.pelletSize && (
+              <div>
+                <dt>{t("Granulométrie", "Pellet size")}</dt>
+                <dd>{p.pelletSize}</dd>
+              </div>
+            )}
             <div>
               <dt>{t("Marque", "Brand")}</dt>
               <dd>KOUDIJS</dd>
@@ -850,15 +865,20 @@ export function EnquiryForm({
       const data = await response.json();
       if (!response.ok)
         throw new Error(
-          response.status === 429
+          response.status === 503
             ? t(
-                "Trop de demandes. Réessayez dans 15 minutes ou contactez-nous sur WhatsApp.",
-                "Too many requests. Try again in 15 minutes or contact us on WhatsApp.",
+                "L’enregistrement est temporairement indisponible. Contactez-nous sur WhatsApp ou par téléphone.",
+                "Saving enquiries is temporarily unavailable. Please contact us on WhatsApp or by phone.",
               )
-            : t(
-                "La demande n’a pas pu être enregistrée. Vérifiez les champs et réessayez.",
-                "Your enquiry could not be saved. Check the fields and try again.",
-              ),
+            : response.status === 429
+              ? t(
+                  "Trop de demandes. Réessayez dans 15 minutes ou contactez-nous sur WhatsApp.",
+                  "Too many requests. Try again in 15 minutes or contact us on WhatsApp.",
+                )
+              : t(
+                  "La demande n’a pas pu être enregistrée. Vérifiez les champs et réessayez.",
+                  "Your enquiry could not be saved. Check the fields and try again.",
+                ),
         );
       setReference(data.id);
     } catch (err) {
@@ -1056,7 +1076,6 @@ export function Contact({
 }) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
-  const [map, setMap] = useState(false);
   return (
     <main id="main">
       <PageIntro
@@ -1133,34 +1152,33 @@ export function Contact({
         <EnquiryForm products={products} productId={productId} />
       </section>
       <section className="container map-section">
-        {map ? (
-          <iframe
-            title={t(
-              "Carte du quartier Odza à Yaoundé",
-              "Map of the Odza area in Yaoundé",
+        <iframe
+          title={t(
+            "Carte du quartier Odza à Yaoundé",
+            "Map of the Odza area in Yaoundé",
+          )}
+          src="https://maps.google.com/maps?q=Commissariat%20Odza%20Yaounde%20Cameroon&output=embed"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          allowFullScreen
+        />
+        <div className="map-caption">
+          <span>
+            {t(
+              "Notre adresse : derrière le Commissariat d’Odza, Yaoundé.",
+              "Our address: behind Odza Police Station, Yaoundé.",
             )}
-            src="https://maps.google.com/maps?q=Commissariat%20Odza%20Yaounde%20Cameroon&output=embed"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="map-placeholder">
-            <Icon name="pin" size={35} />
-            <h3>Odza, Yaoundé</h3>
-            <p>
-              {t(
-                "Chargez la carte Google Maps du quartier. Google recevra alors les données nécessaires à son affichage.",
-                "Load the Google Maps view of the area. Google will then receive the data needed to display it.",
-              )}
-            </p>
-            <button
-              className="button button-outline"
-              onClick={() => setMap(true)}
-            >
-              {t("Afficher la carte", "Load the map")}
-            </button>
-          </div>
-        )}
+          </span>
+          <a
+            className="text-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.google.com/maps/search/?api=1&query=Commissariat+Odza+Yaounde+Cameroon"
+          >
+            {t("Ouvrir dans Google Maps", "Open in Google Maps")}
+            <Icon name="diagonal" size={16} />
+          </a>
+        </div>
       </section>
     </main>
   );

@@ -1,6 +1,7 @@
 import { authenticated, sameOrigin } from "@/lib/auth";
 import { mutateStore, readStore } from "@/lib/store";
 import { statuses } from "@/lib/data";
+import { databaseConfigured } from "@/lib/database";
 export async function GET() {
   if (!(await authenticated()))
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -11,6 +12,11 @@ export async function GET() {
 export async function PATCH(request: Request) {
   if (!sameOrigin(request) || !(await authenticated()))
     return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!databaseConfigured())
+    return Response.json(
+      { error: "Remote storage is not configured" },
+      { status: 503 },
+    );
   const raw = await request.text();
   if (raw.length > 8000)
     return Response.json({ error: "Request too large" }, { status: 413 });

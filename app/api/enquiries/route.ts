@@ -1,11 +1,29 @@
 import { randomUUID } from "node:crypto";
 import { limited, sameOrigin } from "@/lib/auth";
 import { mutateStore, readStore } from "@/lib/store";
+import { databaseConfigured } from "@/lib/database";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   if (!sameOrigin(request))
     return Response.json({ error: "Origin not allowed" }, { status: 403 });
-  if (limited(request, "enquiry", 10))
+  if (!databaseConfigured())
+    return Response.json(
+      {
+        error:
+          "Enquiry storage is not configured. Please contact us on WhatsApp.",
+      },
+      { status: 503 },
+    );
+  let blocked: boolean;
+  try {
+    blocked = await limited(request, "enquiry", 10);
+  } catch {
+    return Response.json(
+      { error: "Enquiry storage unavailable. Please contact us on WhatsApp." },
+      { status: 503 },
+    );
+  }
+  if (blocked)
     return Response.json({ error: "Please try again later." }, { status: 429 });
   const raw = await request.text();
   if (raw.length > 12000)

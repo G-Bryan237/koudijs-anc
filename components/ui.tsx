@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ProductMenu } from "./product-menu";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { categories, whatsapp, type Locale } from "@/lib/data";
@@ -200,8 +201,8 @@ export function Shell({
   const t = (fr: string, en: string) => (locale === "fr" ? fr : en);
   const nav = [
     ["/", t("Accueil", "Home")],
-    ["/a-propos", t("À propos", "About us")],
     ["/produits", t("Nos produits", "Our products")],
+    ["/a-propos", t("À propos", "About us")],
     ["/conseils", t("Conseils & ressources", "Advice & resources")],
     ["/contact", "Contact"],
   ];
@@ -245,15 +246,19 @@ export function Shell({
                 aria-label={t("Navigation principale", "Main navigation")}
                 className="desktop-nav"
               >
-                {nav.map(([href, label]) => (
-                  <Link
-                    className={path === href ? "active" : ""}
-                    key={href}
-                    href={href}
-                  >
-                    {label}
-                  </Link>
-                ))}
+                {nav.map(([href, label]) =>
+                  href === "/produits" ? (
+                    <ProductMenu key={href} locale={locale} />
+                  ) : (
+                    <Link
+                      className={path === href ? "active" : ""}
+                      key={href}
+                      href={href}
+                    >
+                      {label}
+                    </Link>
+                  ),
+                )}
               </nav>
               <div className="header-actions">
                 <div className="language" aria-label={t("Langue", "Language")}>
@@ -305,12 +310,21 @@ export function Shell({
                 className="mobile-nav"
                 aria-label={t("Navigation mobile", "Mobile navigation")}
               >
-                {nav.map(([href, label]) => (
-                  <Link key={href} href={href} onClick={() => setMenu(false)}>
-                    {label}
-                    <Icon name="arrow" size={18} />
-                  </Link>
-                ))}
+                {nav.map(([href, label]) =>
+                  href === "/produits" ? (
+                    <ProductMenu
+                      key={href}
+                      locale={locale}
+                      mobile
+                      onNavigate={() => setMenu(false)}
+                    />
+                  ) : (
+                    <Link key={href} href={href} onClick={() => setMenu(false)}>
+                      {label}
+                      <Icon name="arrow" size={18} />
+                    </Link>
+                  ),
+                )}
                 <Link href="/devis" onClick={() => setMenu(false)}>
                   {t("Demander un devis", "Request a quote")}
                 </Link>

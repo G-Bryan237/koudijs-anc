@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { PasswordField } from "./password-field";
+import { StorageStatus } from "./storage-status";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, type FormEvent } from "react";
@@ -29,18 +31,31 @@ export function AdminLogin({ ready }: { ready: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok)
-        throw new Error(
-          res.status === 429
-            ? t(
-                "Trop de tentatives. Réessayez dans 15 minutes.",
-                "Too many attempts. Try again in 15 minutes.",
-              )
-            : t(
-                "Identifiants incorrects ou accès indisponible.",
-                "Incorrect credentials or access unavailable.",
-              ),
-        );
+      if (!res.ok) {
+        const messages: Record<number, [string, string]> = {
+          401: [
+            "Email ou mot de passe incorrect.",
+            "Incorrect email or password.",
+          ],
+          403: [
+            "Ce domaine n’est pas autorisé pour la connexion. Vérifiez la configuration du déploiement.",
+            "This domain is not allowed for sign-in. Check the deployment configuration.",
+          ],
+          429: [
+            "Trop de tentatives. Réessayez dans 15 minutes.",
+            "Too many attempts. Try again in 15 minutes.",
+          ],
+          503: [
+            "La configuration de connexion ou la base de données est indisponible. Contactez l’administrateur du site.",
+            "Sign-in configuration or the database is unavailable. Contact the site administrator.",
+          ],
+        };
+        const message = messages[res.status] || [
+          "Connexion momentanément indisponible. Réessayez.",
+          "Sign-in is temporarily unavailable. Please retry.",
+        ];
+        throw new Error(t(...message));
+      }
       router.refresh();
     } catch (err) {
       setError(
@@ -108,16 +123,12 @@ export function AdminLogin({ ready }: { ready: boolean }) {
               placeholder="info@anc.cm"
             />
           </label>
-          <label>
-            {t("Mot de passe", "Password")}
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              maxLength={256}
-            />
-          </label>
+          <div className="password-control">
+            <label htmlFor="admin-password">
+              {t("Mot de passe", "Password")}
+            </label>
+            <PasswordField />
+          </div>
           {error && (
             <p className="form-error" role="alert">
               {error}
@@ -153,10 +164,12 @@ export function Dashboard({
   initialProducts,
   initialEnquiries,
   domain,
+  storageReady,
 }: {
   initialProducts: Product[];
   initialEnquiries: Enquiry[];
   domain: string | null;
+  storageReady: boolean;
 }) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
@@ -435,6 +448,7 @@ export function Dashboard({
           </div>
         </header>
         <div className="admin-content">
+          <StorageStatus ready={storageReady} />
           <div className="admin-title">
             <div>
               <span className="eyebrow" style={{ marginBottom: 9 }}>
@@ -752,8 +766,8 @@ export function Dashboard({
                     <h3>{t("Données et accès", "Data and access")}</h3>
                     <p>
                       {t(
-                        "Les demandes et le catalogue sont enregistrés sur le serveur. L’accès administrateur est protégé par une session de huit heures. La modification des identifiants et la sauvegarde des données se font dans la configuration du serveur.",
-                        "Enquiries and catalogue changes are saved on the server. Administrator access uses an eight-hour session. Credentials and data backups are managed in the server configuration.",
+                        "Les demandes et le catalogue sont enregistrés dans la base de données SQLite : locale en développement, distante sur Vercel. L’accès administrateur est protégé par une session de huit heures. La modification des identifiants et la sauvegarde des données se font dans la configuration du serveur.",
+                        "Enquiries and catalogue changes are saved in the SQLite database: locally in development and remotely on Vercel. Administrator access uses an eight-hour session. Credentials and data backups are managed in the server configuration.",
                       )}
                     </p>
                   </div>
@@ -897,6 +911,14 @@ function ProductEditor({
         });
       }}
     >
+      <div className="product-editor-photo">
+        <Image
+          src={p.image || "/images/products/piglet.webp"}
+          alt={p.name[l]}
+          fill
+          sizes="180px"
+        />
+      </div>
       <div className="eyebrow">
         {categories.find((c) => c.id === p.category)?.name[l]}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ResourceNotes } from "./resource-notes";
 import { PageIntro, FinalCTA, useLocale, Icon, WhatsAppButton } from "./ui";
 import { type Bilingual } from "@/lib/data";
 
@@ -195,6 +196,7 @@ export function Resources({ slug }: { slug?: string }) {
               </Link>
             ))}
           </div>
+          <ResourceNotes />
           <div className="support-panel">
             <div>
               <h2>
@@ -243,11 +245,11 @@ export function Legal({ terms = false }: { terms?: boolean }) {
           ],
           [
             "Cookies et préférences",
-            "Le site conserve vos choix de langue et de thème dans deux cookies pendant un an. Un cookie de session strictement nécessaire, valable huit heures, protège l’accès administrateur. Aucun outil publicitaire ni service de mesure d’audience n’est intégré.",
+            "Le site conserve vos choix de langue et de thème dans deux cookies pendant un an. Un cookie de session strictement nécessaire, valable huit heures, protège l’accès administrateur. Aucun outil publicitaire ni service de mesure d’audience n’est intégré. Une empreinte non lisible de l’adresse réseau est conservée dans un compteur temporaire de 15 minutes pour limiter les tentatives abusives.",
           ],
           [
             "Services externes",
-            "Les liens WhatsApp ouvrent un service de Meta. Les liens cartographiques ouvrent Google Maps. La carte intégrée ne se charge que si vous cliquez sur « Afficher la carte ». Ces services traitent des données selon leurs propres politiques. Les photographies sont servies depuis le site.",
+            "Les liens WhatsApp ouvrent un service de Meta. Les liens cartographiques ouvrent Google Maps. La carte intégrée Google Maps se charge automatiquement à proximité de la section de localisation. Ces services traitent des données selon leurs propres politiques. Les photographies sont servies depuis le site.",
           ],
           [
             "Vos demandes",
@@ -273,11 +275,11 @@ export function Legal({ terms = false }: { terms?: boolean }) {
           ],
           [
             "Cookies and preferences",
-            "The website stores language and theme preferences in two cookies for one year. A necessary eight-hour session cookie protects administrator access. No advertising tools or audience analytics services are integrated.",
+            "The website stores language and theme preferences in two cookies for one year. A necessary eight-hour session cookie protects administrator access. No advertising tools or audience analytics services are integrated. A keyed digest of the network address is kept in a temporary 15-minute counter to limit abusive attempts.",
           ],
           [
             "External services",
-            "WhatsApp links open a Meta service. Map links open Google Maps. The embedded map loads only after you click ‘Load the map’. These services process data under their own policies. Photographs are served from this website.",
+            "WhatsApp links open a Meta service. Map links open Google Maps. The embedded Google Map loads automatically near the location section. These services process data under their own policies. Photographs are served from this website.",
           ],
           [
             "Your requests",

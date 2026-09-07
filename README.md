@@ -1,6 +1,6 @@
 # Animal Nutrition Cameroon LLC
 
-A bilingual Next.js website and protected administration dashboard for the KOUDIJS distributor in Yaoundé. The website is a local, unpublished preview.
+Bilingual Next.js website and protected administration dashboard for the KOUDIJS distributor in Yaoundé.
 
 ## Run locally
 
@@ -15,76 +15,89 @@ npm run dev
 Website: http://localhost:3000  
 Administration: http://localhost:3000/admin
 
-Local administrator credentials are in **data/ADMIN-ACCESS.txt**. This file and .env.local are excluded from Git. The setup script generates a unique random password and a salted scrypt hash; it preserves existing configuration. Replace these development credentials and the session secret before production. Never send the credentials file to a public repository.
+The existing local administrator password is in **data/ADMIN-ACCESS.txt**. The setup script preserves existing configuration. Credentials and .env.local are excluded from Git. The ADMIN_PASSWORD_HASH value is not the password to enter in the login form.
 
 ## Included
 
-- French by default, English switching, persistent light/dark preferences.
-- Homepage, company, three category pages, seven product pages, delivery, contact, quotations, three practical guides, privacy, terms and photo credits.
-- Catalogue filters/search and an interactive activity/animal/stage finder.
-- Contextual WhatsApp links, phone/email links and an opt-in Google map of the Odza area.
-- Validated quotation requests with a reference number and persistent server storage.
-- Authenticated admin overview, bilingual product editing, product visibility, enquiries, order statuses, contacts and CSV exports.
-- Orders begin as enquiries. Mark a request as confirmed to move it into the Orders view. No payment is taken online.
-- Custom SVG/ICO favicon and Apple touch icon. No builder or AI badge.
-- Responsive layouts, keyboard focus states, native modal dialogue, reduced-motion support and optimized local WebP images.
-- No invented sales data, customers, reviews, scientific results or product prices.
+- French and English, persistent light/dark preferences, responsive layouts and reduced-motion support.
+- Homepage, company, three category pages, delivery, contact, quotations, tips/resources, privacy, terms and photo credits.
+- Fifteen catalogue entries, including feeding-stage variants, with six packaging images extracted directly from the supplied flyers. Product detail pages identify these representative flyer images.
+- Search, category filters, an animal/stage finder and a products dropdown before About.
+- Automatic Google map of the Odza area, with a separate link to open Google Maps.
+- Three practical guides and three short supplementary notes.
+- Admin login with password visibility control, product previews/editing, visibility controls, enquiries, orders, contacts and CSV exports.
+- SQLite locally and a remote libSQL-compatible database on Vercel.
+- Custom favicon, restrained transitions and no builder badge, invented reviews, customer counters or prices.
 
-WhatsApp conversations are external. Clicking a WhatsApp link does not create a website enquiry or synchronise the conversation into the dashboard. Use the quotation form to record a website request. Email notifications and online payments are not connected.
+Orders begin as enquiries. Confirm a request to move it into Orders. WhatsApp links open an external conversation; they do not create a website enquiry or synchronize messages into the dashboard. Email notifications and online payments are not connected.
 
-## Data and security
+## Hosting and persistence
 
-lib/store.ts stores products and enquiries in **data/store.json**, or DATA_DIRECTORY/store.json when configured. Mutations are serialised within the Node process and written using an atomic rename. Product seeds are used only when the store does not exist. Back up the persistent data directory.
+Follow **[VERCEL-SETUP.md](VERCEL-SETUP.md)** for Vercel environment variables, database setup and sign-in troubleshooting. Vercel does not automatically receive your ignored .env.local file. Redeploy after changing its environment variables.
 
-This implementation supports **one long-running Node.js process with a persistent writable disk**. Do not deploy it to ephemeral/serverless storage or multiple replicas. For those environments, replace the file store with a shared transactional database and use a shared rate limiter before launch.
+Locally, lib/database.ts creates **data/anc.sqlite** (or DATA_DIRECTORY/anc.sqlite). Existing data/store.json is imported on first initialization and preserved as a legacy backup. SQLite becomes authoritative. Catalogue additions preserve saved product edits, visibility and enquiries.
 
-Admin credentials stay on the server. Sessions are HMAC-signed, expire after eight hours, and use HttpOnly, SameSite=Strict cookies (Secure in production). Mutations validate the request origin. Login and enquiry endpoints have in-process rate limiting. Forwarding headers are trusted only if TRUST_PROXY=true; enable that only behind a proxy that overwrites them. Otherwise the local process shares a rate-limit bucket.
+On Vercel, set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN for a remote libSQL-compatible database. Local SQLite files cannot provide durable Vercel storage. Schema and seed initialization are automatic. No local customer records are automatically transferred to the remote database.
 
-For credential rotation, generate a new salt and scrypt hash and change ADMIN_PASSWORD_HASH. Rotate SESSION_SECRET to invalidate all existing sessions. The website does not automatically send email.
+State mutations use database write transactions to preserve simultaneous submissions. The small catalogue and enquiry set share one JSON state row; use separate indexed tables and pagination as the dataset grows. Back up the authoritative database.
+
+Without a remote database on Vercel, the public catalogue remains readable and the administrator sees a setup notice. Enquiries and product edits return an explicit unavailable response.
+
+## Authentication
+
+Admin credentials remain in server environment variables. Passwords use salted scrypt hashes. HMAC-signed sessions expire after eight hours and use HttpOnly, SameSite=Strict cookies, with Secure in production.
+
+Mutations validate the origin against the configured site or exact deployment host. Email comparison ignores surrounding spaces and letter case. Login and enquiry endpoints use short-lived database rate limits; client addresses are hashed. Vercel forwarding headers are trusted on Vercel. For other hosts, set TRUST_PROXY only behind a proxy that overwrites forwarding headers.
+
+Rotate ADMIN_PASSWORD_HASH to change the password and SESSION_SECRET to invalidate sessions. Never publish credentials or add them to NEXT_PUBLIC_ variables.
 
 ## Verification
 
-With the local development server running:
+With a local development server running:
 
 ```sh
+npm run check:hosting
 npm run lint
 npm run build
+node scripts/verify-origins.mjs
 npm run verify
 ```
 
-The integration script checks 28 routes/assets, authentication, session cookie flags, CSRF protection, form validation, persistent enquiries, order updates, product visibility, English/dark rendering and 404 behavior. It creates and removes a synthetic enquiry. Run only against a local development instance without concurrent writes. TEST_BASE_URL can override the local URL.
+Integration verification checks 42 pages/assets, all 15 catalogue entries, normalized email login, protected writes, concurrent enquiry submissions, persistence through a separate SQLite connection, order statuses, product visibility, English/dark rendering, automatic map markup, password control markup and logout.
+
+It refuses a remote database, creates synthetic local enquiries, removes only those records and restores the product it changes. Run on a local development instance without concurrent edits to that test product. TEST_BASE_URL can select another localhost port.
 
 ```sh
+npm run check:vercel
 npm run format
 ```
 
-## Launch requirements
+check:vercel checks the environment available to that command; it does not inspect a remote Vercel project automatically.
 
-The website has **not been deployed**. Crawling is disabled in app/robots.ts, app/layout.tsx and the X-Robots-Tag header in next.config.ts. These are indexing controls, not access control; keep the preview local or behind hosting authentication.
+## Publication
 
-Before publication:
+These changes have not been deployed by the coding agent. Indexing remains disabled. Indexing controls are not access control; protect private previews through the hosting provider.
 
-1. Choose and connect the business’s custom domain, configure DNS and verify HTTPS. Set SITE_URL to its exact origin (no trailing slash).
-2. Choose a persistent hosting location, configure data backups and rotate development credentials. Confirm the storage/retention and data-handling arrangements.
-3. Have the company confirm privacy wording, retention periods, commercial terms, returns/refunds, registration details and the legal obligations applicable to its operation. The included legal pages describe this implementation and are review drafts, not a compliance certification.
-4. Confirm product references and supplier technical sheets before publishing precise feeding doses, guaranteed benefits, pack sizes or prices. Unclear flyer tables have intentionally not been transcribed.
-5. Confirm the supplied phone numbers, info@anc.cm mailbox, Odza address and delivery arrangements.
-6. Verify the favicon and absence of a builder badge on the custom domain.
-7. Only after approval, enable indexing, add canonical URLs and a sitemap for that verified domain.
+Before launch:
 
-No domain ownership or DNS access was supplied. The admin launch checklist explicitly keeps the domain and final publication pending.
+1. Connect the business custom domain and verify HTTPS.
+2. Configure Vercel credentials and the remote database, redeploy, and verify hosted sign-in plus enquiry persistence.
+3. Confirm company details, delivery arrangements, product references and technical sheets. Precise feeding doses, guaranteed outcomes, unverified pack sizes and prices are not published.
+4. Have the company review the privacy and terms pages for its actual operations.
+5. Verify the favicon and absence of a builder badge on the domain.
+6. Enable indexing and add canonical URLs and a sitemap only after launch approval.
 
-## Content and photography
+## Content and images
 
-Business facts come from the supplied briefs and flyers. ANC is described as a distributor, without claiming official or exclusive status. The site uses an ANC monogram and a typographic KOUDIJS reference; replace these with standalone approved brand assets when available.
+Company facts come from the supplied briefs and flyers. ANC is described as a distributor without claiming exclusive status. The website uses an ANC monogram and a typographic KOUDIJS reference.
 
-Real, locally hosted photographs from Unsplash:
+The six product packaging assets are direct crops of the supplied flyers, not generated replacements. Their detail is limited by the original flyer resolution. The extraction script is scripts/extract-flyer-products.mjs; its optional argument is the directory containing the two original flyer filenames.
 
-- Aquaculture: Aleksandr Galichkin, https://unsplash.com/photos/v8k_Q4ZjdpY (Pa Klok, Thailand).
-- Poultry: Jenny Hill, https://unsplash.com/photos/OnKIsDLCeZ8.
-- Pigs: Zoe Richardson, https://unsplash.com/photos/vMjrs3C50d8 (Pasture Song Farm, Pennsylvania).
-- License: https://unsplash.com/license.
+Sector photographs are hosted locally and credited at /credits:
 
-These photographs illustrate sectors; they are not claimed to depict ANC premises, staff or customers. No generated photography or invented branded packaging is used. Public credits are available at /credits.
+- Aquaculture: [Aleksandr Galichkin](https://unsplash.com/photos/v8k_Q4ZjdpY).
+- Poultry: [Jenny Hill](https://unsplash.com/photos/OnKIsDLCeZ8).
+- Pigs: [Zoe Richardson](https://unsplash.com/photos/vMjrs3C50d8).
+- [Unsplash license](https://unsplash.com/license).
 
-Legal review reference: Cameroon Law No. 2024/017 of 23 December 2024, published by the Presidency: https://www.prc.cm/en/news/the-acts/laws/7602-law-no-2024-017-of-23-december-2024-to-authorize-the-president-of-the-republic-to-ratify-the-beijing-treaty-on-audio-visual-performances-adopted-in-beijing-china-on-24-june-2019
+Sector photographs illustrate farming activities and are not presented as ANC premises, staff or customers.
