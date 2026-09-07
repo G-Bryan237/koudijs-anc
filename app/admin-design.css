@@ -1,0 +1,472 @@
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  background: var(--cream);
+}
+.admin-sidebar {
+  background: #173c2b;
+  color: #dce6d9;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 23px;
+}
+.admin-sidebar .brand {
+  font-size: 10px;
+  color: #eef3e9;
+}
+.admin-sidebar .brand small {
+  font-size: 8px;
+}
+.admin-sidebar .brand-mark {
+  width: 34px;
+}
+.admin-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #a9bfa7;
+  margin: 48px 14px 16px;
+}
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.admin-sidebar nav button {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 15px;
+  text-align: left;
+  font-size: 12px;
+  min-height: 46px;
+  border-radius: 3px;
+}
+.admin-sidebar nav button[aria-pressed="true"] {
+  background: #ffffff16;
+  color: #fff;
+}
+.admin-sidebar nav button:hover {
+  background: #ffffff0e;
+}
+.admin-sidebar-bottom {
+  margin-top: auto;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-sidebar-bottom > a,
+.admin-sidebar-bottom > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+}
+.admin-main {
+  min-width: 0;
+}
+.admin-topbar {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  height: 80px;
+  padding: 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.admin-topbar > span {
+  font-size: 12px;
+}
+.admin-topbar > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.admin-avatar {
+  background: var(--green-light);
+  color: var(--green);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  border-radius: 3px;
+}
+.admin-content {
+  padding: 37px;
+  max-width: 1450px;
+  margin: auto;
+}
+.admin-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+.admin-title h1 {
+  font-size: 31px;
+}
+.admin-title p {
+  font-size: 12px;
+  margin-top: 10px;
+}
+.admin-title .button {
+  font-size: 11px;
+}
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 22px;
+  border-radius: 4px;
+}
+.stat-card > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  gap: 10px;
+}
+.stat-card strong {
+  display: block;
+  font-size: 35px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  margin-block: 13px 4px;
+}
+.stat-card small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.admin-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 25px;
+}
+.admin-panel-heading {
+  padding: 22px 25px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+}
+.admin-panel-heading h2 {
+  font-size: 18px;
+}
+.admin-panel-heading p {
+  font-size: 11px;
+  margin-top: 5px;
+}
+.admin-panel .empty-state {
+  min-height: 270px;
+}
+.admin-panel .empty-state h2 {
+  font-size: 22px;
+}
+.admin-panel .empty-state p {
+  max-width: 440px;
+  font-size: 12px;
+}
+.admin-table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+th {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 550;
+  background: var(--cream);
+}
+th,
+td {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td strong {
+  font-weight: 550;
+}
+td small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+td .text-link {
+  font-size: 10px;
+}
+.status {
+  display: inline-flex;
+  padding: 4px 9px;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 10px;
+  border-radius: 3px;
+}
+.admin-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-filters select {
+  width: auto;
+  font-size: 11px;
+  min-height: 40px;
+}
+.admin-two-columns {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 24px;
+}
+.admin-checklist {
+  padding: 24px;
+}
+.admin-checklist > div {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.admin-checklist svg {
+  color: var(--green);
+}
+.admin-checklist p {
+  font-size: 10px;
+  margin-top: 4px;
+}
+.admin-checklist .pending {
+  color: #a17e40;
+}
+.admin-notice {
+  background: var(--green-light);
+  border: 1px solid var(--border);
+  padding: 15px 20px;
+  font-size: 12px;
+  margin-bottom: 24px;
+}
+.admin-product-name {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.admin-product-thumbnail {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.admin-products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+.admin-product-editor {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 25px;
+  border-radius: 4px;
+}
+.admin-product-editor h2 {
+  font-size: 22px;
+  margin-bottom: 22px;
+}
+.admin-product-editor label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+.admin-product-editor textarea {
+  font-size: 12px;
+}
+.admin-product-editor .consent {
+  flex-direction: row;
+}
+.admin-product-editor .button {
+  font-size: 11px;
+}
+.admin-settings {
+  padding: 28px;
+  display: grid;
+  gap: 24px;
+}
+.admin-settings h3 {
+  margin-bottom: 9px;
+  font-size: 18px;
+}
+.admin-settings p {
+  font-size: 12px;
+  max-width: 700px;
+}
+.admin-settings a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.admin-language {
+  font-size: 11px;
+  min-width: 44px;
+  min-height: 44px;
+}
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.login-aside {
+  background: #173c2b;
+  color: #edf2e8;
+  padding: 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.login-aside .brand {
+  color: #edf2e8;
+}
+.login-aside h1 {
+  font-size: 52px;
+  line-height: 1.2;
+  margin-bottom: 25px;
+}
+.login-aside p {
+  color: #baccb5;
+  max-width: 420px;
+  font-size: 14px;
+}
+.login-aside small {
+  font-size: 11px;
+  color: #baccb5;
+}
+.login-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 45px;
+  background: var(--cream);
+}
+.login-form {
+  width: 100%;
+  max-width: 360px;
+}
+.login-form .eyebrow {
+  margin-bottom: 14px;
+}
+.login-form h2 {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+.login-form > p {
+  font-size: 12px;
+  margin-bottom: 28px;
+}
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.login-form .button {
+  width: 100%;
+  margin-top: 5px;
+}
+.login-form .text-link {
+  margin-top: 20px;
+}
+.login-note {
+  margin-top: 25px !important;
+  font-size: 11px !important;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #001a1090;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+}
+.enquiry-dialog {
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--card);
+  padding: 32px;
+  border-radius: 5px;
+}
+.dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.dialog-heading h2 {
+  font-size: 26px;
+}
+.dialog-heading p {
+  font-size: 11px;
+  margin-top: 8px;
+}
+.enquiry-dialog .product-specs {
+  margin-block: 15px;
+}
+.enquiry-dialog > p {
+  font-size: 13px;
+  white-space: pre-wrap;
+  padding-block: 15px;
+}
+.enquiry-dialog > label {
+  display: block;
+  font-size: 12px;
+  margin-block: 15px;
+}
+.enquiry-dialog select {
+  margin-top: 7px;
+}
+.admin-toast {
+  font-size: 12px;
+  color: var(--green);
+  padding: 10px 0;
+}
+.admin-empty-small {
+  padding: 25px;
+  font-size: 12px;
+}
+.customer-card {
+  padding: 25px;
+}
+.customer-card h3 {
+  font-size: 18px;
+  margin-bottom: 7px;
+}
+.customer-card p {
+  font-size: 12px;
+}
