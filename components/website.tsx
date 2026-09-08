@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCart } from "./cart";
 import { useState, type FormEvent } from "react";
 import { categories, whatsapp, type Product, type Category } from "@/lib/data";
 import {
@@ -609,6 +610,7 @@ function ProductCard({ product: p }: { product: Product }) {
             {l === "fr" ? "Prix sur demande" : "Request price"}
           </Link>
         </div>
+        <AddToCart product={p} />
       </div>
     </article>
   );
@@ -680,6 +682,7 @@ export function ProductDetail({
             </div>
           </dl>
           <div className="button-row">
+            <AddToCart product={p} />
             <Link
               href={`/devis?produit=${p.id}`}
               className="button button-green"

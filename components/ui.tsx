@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useCart } from "@/lib/cart";
 import { ProductMenu } from "./product-menu";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +10,13 @@ const LanguageContext = createContext<Locale>("fr");
 export const useLocale = () => useContext(LanguageContext);
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
+    cart: (
+      <>
+        <path d="M2 3h3l3 12h11l3-9H6" />
+        <circle cx="9" cy="20" r="1" />
+        <circle cx="18" cy="20" r="1" />
+      </>
+    ),
     arrow: (
       <>
         <path d="M4 12h15M13 5l7 7-7 7" />
@@ -194,6 +202,7 @@ export function Shell({
   locale: Locale;
   theme: string;
 }) {
+  const cart = useCart();
   const [dark, setDark] = useState(theme === "dark");
   const [menu, setMenu] = useState(false);
   const path = usePathname();
@@ -261,6 +270,19 @@ export function Shell({
                 )}
               </nav>
               <div className="header-actions">
+                <Link
+                  href="/panier"
+                  className="header-cart"
+                  onClick={() => setMenu(false)}
+                  aria-label={t(
+                    `Panier, ${cart.length} produits`,
+                    `Cart, ${cart.length} products`,
+                  )}
+                >
+                  <Icon name="cart" size={22} />
+                  <span className="cart-label">{t("Panier", "Cart")}</span>
+                  <span className="cart-count">{cart.length}</span>
+                </Link>
                 <div className="language" aria-label={t("Langue", "Language")}>
                   <button
                     onClick={() => switchLanguage("fr")}

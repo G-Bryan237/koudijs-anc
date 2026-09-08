@@ -1,3 +1,4 @@
+import { Cart } from "@/components/cart";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
@@ -17,6 +18,7 @@ type Props = {
   searchParams: Promise<{ produit?: string }>;
 };
 const titles: Record<string, [string, string]> = {
+  panier: ["Votre panier", "Your shopping cart"],
   produits: ["Nos produits KOUDIJS", "Our KOUDIJS products"],
   aquaculture: ["Nutrition aquaculture", "Aquaculture nutrition"],
   volaille: ["Nutrition volaille", "Poultry nutrition"],
@@ -74,6 +76,8 @@ export default async function Page({ params, searchParams }: Props) {
       />
     );
   switch (slug[0]) {
+    case "panier":
+      return <Cart products={products} />;
     case "produits":
       return <Catalog products={products} />;
     case "a-propos":
