@@ -909,7 +909,7 @@ function ProductEditor({
     >
       <div className="product-editor-photo">
         <Image
-          src={p.image || "/images/products/piglet.webp"}
+          src={p.image || "/images/products/piglet.png"}
           alt={p.name[l]}
           fill
           sizes="180px"

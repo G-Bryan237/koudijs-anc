@@ -12,7 +12,7 @@ export function productImage(id: string) {
   const family = Object.keys(images)
     .sort((a, b) => b.length - a.length)
     .find((key) => id === key || id.startsWith(key + "-"));
-  return "/images/products/" + (images[family || ""] || "piglet") + ".webp";
+  return "/images/products/" + (images[family || ""] || "piglet") + ".png";
 }
 const fishStages = [
   {

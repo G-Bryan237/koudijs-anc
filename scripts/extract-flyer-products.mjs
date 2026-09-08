@@ -55,7 +55,7 @@ const crops = [
     ],
   },
   {
-    name: "layer",
+    name: "layers",
     file: livestock,
     width: 809,
     height: 1080,
@@ -120,7 +120,7 @@ for (const crop of crops) {
     .extract({ left, top, width, height })
     .ensureAlpha()
     .composite([{ input: mask, blend: "dest-in" }])
-    .webp({ quality: 95 })
-    .toFile("public/images/products/" + crop.name + ".webp");
+    .png()
+    .toFile("public/images/products/" + crop.name + ".png");
   console.log(crop.name + ": " + width + " x " + height);
 }
