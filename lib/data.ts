@@ -116,23 +116,9 @@ export const initialProducts: Product[] = [
       en: "KOUDIJS nutrition for growing piglets. Feed selection takes weaning, age and animal weight into account.",
     },
     stages: {
-      fr: "Pré-démarrage · Démarrage · Croissance",
-      en: "Pre-starter · Starter · Grower",
+      fr: "Pré-démarrage · Démarrage · Croissance · Finition",
+      en: "Pre-starter · Starter · Grower · Finisher",
     },
-    available: true,
-  },
-  {
-    id: "porcs-en-croissance",
-    category: "porcs",
-    name: {
-      fr: "Nutrition des porcs en croissance",
-      en: "Growing pig nutrition",
-    },
-    description: {
-      fr: "Contactez notre équipe pour identifier une solution KOUDIJS adaptée aux porcs en croissance et en finition.",
-      en: "Contact our team to identify a KOUDIJS solution for growing and finishing pigs.",
-    },
-    stages: { fr: "Croissance · Finition", en: "Grower · Finisher" },
     available: true,
   },
   {

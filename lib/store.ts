@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { database, databaseConfigured } from "./database";
 import { initialProducts, type Enquiry, type Product } from "./data";
-import { expandedProducts, productImage } from "./product-catalog";
+import { productImage } from "./product-catalog";
 
 export type Store = { products: Product[]; enquiries: Enquiry[] };
-const seeds = [...initialProducts, ...expandedProducts];
+const seeds = initialProducts;
 function migrate(store: Store): Store {
   const existing = new Map(store.products.map((p) => [p.id, p]));
   const products: Product[] = seeds.map((seed) => {
@@ -19,8 +19,6 @@ function migrate(store: Store): Store {
       ...(seed.family ? { family: seed.family } : {}),
     };
   });
-  for (const p of store.products)
-    if (!seeds.some((s) => s.id === p.id)) products.push(p);
   return { products, enquiries: store.enquiries };
 }
 function empty(): Store {
