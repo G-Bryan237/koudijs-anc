@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s | Animal Nutrition Cameroon",
     },
     description: en
-      ? "KOUDIJS feed for aquaculture, poultry and pigs. Guidance, quotations and delivery across Cameroon from Yaoundé."
-      : "Aliments KOUDIJS pour aquaculture, volaille et élevage porcin. Conseil, devis et livraison au Cameroun depuis Yaoundé.",
+      ? "KOUDIJS feed for aquaculture, poultry and pigs. Cattle enquiries, guidance, quotations and delivery across Cameroon from Yaoundé."
+      : "Aliments KOUDIJS pour aquaculture, volaille et élevage porcin. Conseil pour les bovins, devis et livraison au Cameroun depuis Yaoundé.",
     robots: { index: false, follow: false },
     icons: { icon: "/icon.svg", apple: "/apple-icon.png" },
   };

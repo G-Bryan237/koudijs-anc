@@ -43,7 +43,8 @@ export function ProductMenu({
         if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Escape") {
+        if (e.key === "Escape" && open) {
+          e.stopPropagation();
           setOpen(false);
           trigger.current?.focus();
         }
@@ -76,7 +77,12 @@ export function ProductMenu({
             {locale === "fr" ? "LES GAMMES KOUDIJS" : "KOUDIJS PRODUCT RANGES"}
           </span>
           {categories.map((c) => (
-            <Link key={c.id} href={"/" + c.id} onClick={close}>
+            <Link
+              key={c.id}
+              href={"/" + c.id}
+              aria-current={path === "/" + c.id ? "page" : undefined}
+              onClick={close}
+            >
               <strong>{c.name[locale]}</strong>
               <small>{c.animals[locale]}</small>
             </Link>

@@ -2,7 +2,15 @@
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { ProductMenu } from "./product-menu";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { PageMotion } from "./page-motion";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { categories, whatsapp, type Locale } from "@/lib/data";
 
@@ -204,8 +212,45 @@ export function Shell({
 }) {
   const cart = useCart();
   const [dark, setDark] = useState(theme === "dark");
-  const [menu, setMenu] = useState(false);
+  const [menuPath, setMenuPath] = useState<string | null>(null);
   const path = usePathname();
+  const menu = menuPath === path;
+  const setMenu = (open: boolean) => setMenuPath(open ? path : null);
+  const header = useRef<HTMLElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const cartBadge = useRef<HTMLSpanElement>(null);
+  const quantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const previousQuantity = useRef(quantity);
+  useEffect(() => {
+    let animation: Animation | undefined;
+    if (
+      quantity > previousQuantity.current &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      animation = cartBadge.current?.animate(
+        [{ scale: 1 }, { scale: 1.18 }, { scale: 1 }],
+        { duration: 220, easing: "ease-out" },
+      );
+    }
+    previousQuantity.current = quantity;
+    return () => animation?.cancel();
+  }, [quantity]);
+  useEffect(() => {
+    if (!menu) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!header.current?.contains(event.target as Node)) setMenuPath(null);
+    };
+    const desktop = window.matchMedia("(min-width: 1001px)");
+    const resize = () => {
+      if (desktop.matches) setMenuPath(null);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    desktop.addEventListener("change", resize);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      desktop.removeEventListener("change", resize);
+    };
+  }, [menu]);
   const router = useRouter();
   const t = (fr: string, en: string) => (locale === "fr" ? fr : en);
   const nav = [
@@ -229,6 +274,7 @@ export function Shell({
   }
   return (
     <LanguageContext.Provider value={locale}>
+      <PageMotion />
       <a className="skip-link" href="#main">
         {t("Aller au contenu", "Skip to content")}
       </a>
@@ -248,7 +294,21 @@ export function Shell({
               </a>
             </div>
           </div>
-          <header className="header">
+          <header
+            ref={header}
+            className="header"
+            onKeyDown={(event) => {
+              if (menu && event.key === "Escape") {
+                event.preventDefault();
+                setMenuPath(null);
+                menuButton.current?.focus();
+              }
+            }}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget))
+                setMenuPath(null);
+            }}
+          >
             <div className="container header-inner">
               <Brand />
               <nav
@@ -260,7 +320,13 @@ export function Shell({
                     <ProductMenu key={href} locale={locale} />
                   ) : (
                     <Link
-                      className={path === href ? "active" : ""}
+                      className={
+                        path === href ||
+                        (href !== "/" && path.startsWith(href + "/"))
+                          ? "active"
+                          : ""
+                      }
+                      aria-current={path === href ? "page" : undefined}
                       key={href}
                       href={href}
                     >
@@ -281,7 +347,9 @@ export function Shell({
                 >
                   <Icon name="cart" size={22} />
                   <span className="cart-label">{t("Panier", "Cart")}</span>
-                  <span className="cart-count">{cart.length}</span>
+                  <span ref={cartBadge} className="cart-count">
+                    {cart.length}
+                  </span>
                 </Link>
                 <div className="language" aria-label={t("Langue", "Language")}>
                   <button
@@ -316,13 +384,18 @@ export function Shell({
                   <Icon name="diagonal" size={15} />
                 </Link>
                 <button
+                  ref={menuButton}
                   className="icon-button menu-toggle"
                   aria-expanded={menu}
                   aria-controls="mobile-navigation"
                   aria-label={t("Menu de navigation", "Navigation menu")}
                   onClick={() => setMenu(!menu)}
                 >
-                  <Icon name={menu ? "close" : "menu"} />
+                  <span className="menu-lines" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
                 </button>
               </div>
             </div>
@@ -341,7 +414,12 @@ export function Shell({
                       onNavigate={() => setMenu(false)}
                     />
                   ) : (
-                    <Link key={href} href={href} onClick={() => setMenu(false)}>
+                    <Link
+                      key={href}
+                      href={href}
+                      aria-current={path === href ? "page" : undefined}
+                      onClick={() => setMenu(false)}
+                    >
                       {label}
                       <Icon name="arrow" size={18} />
                     </Link>

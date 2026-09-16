@@ -1,6 +1,6 @@
 export type Locale = "fr" | "en";
 export type Bilingual = { fr: string; en: string };
-export type Category = "aquaculture" | "volaille" | "porcs";
+export type Category = "aquaculture" | "volaille" | "porcs" | "bovins";
 export type Product = {
   id: string;
   category: Category;
@@ -51,6 +51,16 @@ export const categories: {
       en: "Nutrition solutions for each stage of your pig operation.",
     },
     image: "/images/pigs.webp",
+  },
+  {
+    id: "bovins",
+    name: { fr: "Bovins", en: "Cows" },
+    animals: { fr: "Vaches, veaux & bovins", en: "Cows, calves & cattle" },
+    description: {
+      fr: "Parlons des besoins de vos bovins et des solutions adaptées à votre élevage.",
+      en: "Tell us about your cattle and discuss nutrition suited to your farm.",
+    },
+    image: "/images/cows.webp",
   },
 ];
 export const initialProducts: Product[] = [

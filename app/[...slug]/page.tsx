@@ -15,13 +15,14 @@ import { categories, type Category } from "@/lib/data";
 export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ slug: string[] }>;
-  searchParams: Promise<{ produit?: string }>;
+  searchParams: Promise<{ produit?: string; categorie?: string }>;
 };
 const titles: Record<string, [string, string]> = {
   panier: ["Votre panier", "Your shopping cart"],
   produits: ["Nos produits KOUDIJS", "Our KOUDIJS products"],
   aquaculture: ["Nutrition aquaculture", "Aquaculture nutrition"],
   volaille: ["Nutrition volaille", "Poultry nutrition"],
+  bovins: ["Nutrition bovine", "Cattle nutrition"],
   porcs: ["Nutrition porcine", "Pig nutrition"],
   "a-propos": ["Notre entreprise", "About us"],
   contact: ["Contact", "Contact"],
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 export default async function Page({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { produit } = await searchParams;
+  const { produit, categorie } = await searchParams;
   const products = (await readStore()).products.filter((p) => p.available);
   if (slug.length === 2 && slug[0] === "produits") {
     const p = products.find((p) => p.id === slug[1]);
@@ -85,7 +86,14 @@ export default async function Page({ params, searchParams }: Props) {
     case "contact":
       return <Contact products={products} />;
     case "devis":
-      return <Contact quote products={products} productId={produit} />;
+      return (
+        <Contact
+          quote
+          products={products}
+          productId={produit}
+          category={categories.find((item) => item.id === categorie)?.id}
+        />
+      );
     case "livraison":
       return <Delivery />;
     case "conseils":

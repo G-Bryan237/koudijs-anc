@@ -1,33 +1,42 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addToCart, setCartQuantity, useCart } from "@/lib/cart";
 import { categories, whatsapp, type Product } from "@/lib/data";
 import { Icon, PageIntro, useLocale } from "./ui";
 export function AddToCart({ product }: { product: Product }) {
   const locale = useLocale();
   const [added, setAdded] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const label = `${locale === "fr" ? "Ajouter au panier" : "Add to cart"} : ${product.name[locale]}`;
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
   return (
     <div className="cart-add">
       <button
         type="button"
         className="button button-green"
+        aria-label={label}
+        title={label}
         disabled={!product.available}
         onClick={() => {
           addToCart(product.id);
           setAdded(true);
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => setAdded(false), 2400);
         }}
       >
-        <Icon name="cart" size={18} />
-        {locale === "fr" ? "Ajouter au panier" : "Add to cart"}
+        <Icon name={added ? "check" : "cart"} size={20} />
       </button>
-      <span role="status">
-        {added && (
-          <Link href="/panier" className="text-link">
-            {locale === "fr" ? "Ajouté · Voir le panier" : "Added · View cart"}
-          </Link>
-        )}
+      <span className="cart-announcement" role="status" aria-atomic="true">
+        {added
+          ? `${product.name[locale]} — ${locale === "fr" ? "Ajouté au panier" : "Added to cart"}`
+          : ""}
       </span>
     </div>
   );
@@ -36,6 +45,11 @@ export function Cart({ products }: { products: Product[] }) {
   const locale = useLocale();
   const t = (fr: string, en: string) => (locale === "fr" ? fr : en);
   const items = useCart();
+  const [removed, setRemoved] = useState<{
+    id: string;
+    quantity: number;
+    name: string;
+  } | null>(null);
   const rows = items.map((item) => ({
     ...item,
     product: products.find((p) => p.id === item.id && p.available),
@@ -64,6 +78,28 @@ export function Cart({ products }: { products: Product[] }) {
           "Review your feed and adjust quantities before requesting your quotation.",
         )}
       />
+      {removed && (
+        <div className="container cart-undo">
+          <p role="status">
+            {removed.name} — {t("retiré du panier", "removed from cart")}
+          </p>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => {
+              const current =
+                items.find((item) => item.id === removed.id)?.quantity || 0;
+              setCartQuantity(
+                removed.id,
+                Math.min(9999, current + removed.quantity),
+              );
+              setRemoved(null);
+            }}
+          >
+            {t("Annuler", "Undo")} <Icon name="arrow" size={16} />
+          </button>
+        </div>
+      )}
       <section className="container section cart-layout">
         {rows.length === 0 ? (
           <div className="cart-empty">
@@ -155,7 +191,14 @@ export function Cart({ products }: { products: Product[] }) {
                         <button
                           type="button"
                           className="cart-remove"
-                          onClick={() => setCartQuantity(id, 0)}
+                          onClick={() => {
+                            setRemoved({
+                              id,
+                              quantity,
+                              name: product.name[locale],
+                            });
+                            setCartQuantity(id, 0);
+                          }}
                           aria-label={t(
                             `Retirer ${product.name.fr}`,
                             `Remove ${product.name.en}`,

@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AddToCart } from "./cart";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { categories, whatsapp, type Product, type Category } from "@/lib/data";
 import {
   Icon,
@@ -24,7 +24,7 @@ export function CategoryCards() {
               src={c.image}
               alt={c.animals[l]}
               fill
-              sizes="(max-width: 700px) 100vw, 33vw"
+              sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
             <span className="photo-number">0{i + 1}</span>
           </div>
@@ -69,8 +69,8 @@ export function Home({ products }: { products: Product[] }) {
             </h1>
             <p>
               {t(
-                "Des solutions adaptées à vos poissons, volailles et porcs. Une équipe à Yaoundé pour vous conseiller et organiser votre approvisionnement.",
-                "Nutrition for your fish, poultry and pigs. A team in Yaoundé to guide your choices and arrange your feed supply.",
+                "Des solutions adaptées à vos poissons, volailles, porcs et bovins. Une équipe à Yaoundé pour vous conseiller et organiser votre approvisionnement.",
+                "Nutrition for your fish, poultry, pigs and cattle. A team in Yaoundé to guide your choices and arrange your feed supply.",
               )}
             </p>
             <div className="hero-buttons">
@@ -329,13 +329,39 @@ export function Home({ products }: { products: Product[] }) {
   );
 }
 
-export function Finder({ products }: { products: Product[] }) {
+export function Finder({
+  products,
+  category = "aquaculture",
+}: {
+  products: Product[];
+  category?: Category;
+}) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
-  const [activity, setActivity] = useState<Category>("aquaculture");
+  const [activity, setActivity] = useState<Category>(category);
   const [animal, setAnimal] = useState("");
   const [stage, setStage] = useState("");
   const [result, setResult] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!result) return;
+    const frame = requestAnimationFrame(() => {
+      const element = resultRef.current;
+      if (!element) return;
+      element.focus({ preventScroll: true });
+      const bounds = element.getBoundingClientRect();
+      if (bounds.bottom > window.innerHeight || bounds.top < 110) {
+        element.scrollIntoView({
+          block: "nearest",
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "instant"
+            : "smooth",
+        });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [result]);
   const options = products.filter(
     (p) => p.category === activity && p.available && !p.family,
   );
@@ -386,44 +412,55 @@ export function Finder({ products }: { products: Product[] }) {
               ))}
             </select>
           </label>
-          <label>
-            <span>02</span>
-            {t("Vos animaux", "Your animals")}
-            <select
-              required
-              value={animal}
-              onChange={(e) => {
-                setAnimal(e.target.value);
-                setStage("");
-                setResult(false);
-              }}
-            >
-              <option value="">{t("Sélectionner", "Select")}</option>
-              {options.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name[l]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>03</span>
-            {t("Phase d’élevage", "Production stage")}
-            <select
-              required
-              value={stage}
-              disabled={!selected}
-              onChange={(e) => {
-                setStage(e.target.value);
-                setResult(false);
-              }}
-            >
-              <option value="">{t("Sélectionner", "Select")}</option>
-              {selected?.stages[l].split(" · ").map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </label>
+          {options.length > 0 ? (
+            <>
+              <label>
+                <span>02</span>
+                {t("Vos animaux", "Your animals")}
+                <select
+                  required
+                  value={animal}
+                  onChange={(e) => {
+                    setAnimal(e.target.value);
+                    setStage("");
+                    setResult(false);
+                  }}
+                >
+                  <option value="">{t("Sélectionner", "Select")}</option>
+                  {options.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name[l]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>03</span>
+                {t("Phase d’élevage", "Production stage")}
+                <select
+                  required
+                  value={stage}
+                  disabled={!selected}
+                  onChange={(e) => {
+                    setStage(e.target.value);
+                    setResult(false);
+                  }}
+                >
+                  <option value="">{t("Sélectionner", "Select")}</option>
+                  {selected?.stages[l].split(" · ").map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <p className="finder-advice">
+              {t(
+                "Précisez vos animaux et leurs besoins à notre équipe pour connaître les solutions disponibles.",
+                "Tell our team about your animals and their needs to discuss available options.",
+              )}
+            </p>
+          )}
         </div>
         <div className="finder-bottom">
           <span>
@@ -433,13 +470,29 @@ export function Finder({ products }: { products: Product[] }) {
               "Our team confirms the choice with you.",
             )}
           </span>
-          <button className="button button-green" type="submit">
-            {t("Trouver ma gamme", "Find my range")}
-            <Icon name="arrow" size={18} />
-          </button>
+          {options.length > 0 ? (
+            <button className="button button-green" type="submit">
+              {t("Trouver ma gamme", "Find my range")}
+              <Icon name="arrow" size={18} />
+            </button>
+          ) : (
+            <Link
+              className="button button-green"
+              href={`/devis?categorie=${activity}`}
+            >
+              {t("Demander conseil", "Ask our team")}
+              <Icon name="arrow" size={18} />
+            </Link>
+          )}
         </div>
         {result && selected && (
-          <div className="finder-result" role="status">
+          <div
+            ref={resultRef}
+            tabIndex={-1}
+            className="finder-result"
+            role="status"
+            aria-label={t("Gamme à explorer", "Suggested range")}
+          >
             <div>
               <small>{t("Gamme à explorer", "Suggested range")}</small>
               <h3>{selected.name[l]}</h3>
@@ -475,6 +528,7 @@ export function Catalog({
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
   const [filter, setFilter] = useState(category || "all");
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const c = categories.find((c) => c.id === category);
   const shown = products.filter(
     (p) =>
@@ -499,8 +553,8 @@ export function Catalog({
         description={
           c?.description[l] ||
           t(
-            "Aliments et concentrés KOUDIJS pour l’aquaculture, la volaille et les porcs. Demandez un devis adapté à vos besoins.",
-            "KOUDIJS feed and concentrates for aquaculture, poultry and pigs. Request a quotation for your farm.",
+            "Aliments et concentrés KOUDIJS pour l’aquaculture, la volaille et les porcs. Pour les bovins, contactez-nous pour discuter de vos besoins.",
+            "KOUDIJS feed and concentrates for aquaculture, poultry and pigs. For cattle, contact us to discuss your needs.",
           )
         }
       />
@@ -527,50 +581,91 @@ export function Catalog({
                 </button>
               ))}
           </div>
-          <label className="search-field">
+          <div className="search-field catalog-search">
             <Icon name="search" size={18} />
             <input
+              ref={searchRef}
               aria-label={t("Rechercher un produit", "Search products")}
               placeholder={t("Rechercher un produit…", "Search products…")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-          </label>
+            {query && (
+              <button
+                type="button"
+                className="search-clear"
+                aria-label={t("Effacer la recherche", "Clear search")}
+                onClick={() => {
+                  setQuery("");
+                  searchRef.current?.focus();
+                }}
+              >
+                <Icon name="close" size={16} />
+              </button>
+            )}
+          </div>
         </div>
-        <p className="result-count">
+        <p
+          className="result-count"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {shown.length}{" "}
           {t("produit(s) dans cette sélection", "product(s) in this selection")}
         </p>
-        <div className="product-grid">
+        <div key={filter} className="product-grid catalog-results">
           {shown.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
-        {shown.length === 0 && (
+        {shown.length === 0 && filter === "bovins" && !query.trim() ? (
           <div className="empty-state">
-            <Icon name="search" size={35} />
-            <h2>{t("Aucun produit trouvé", "No products found")}</h2>
+            <Icon name="users" size={35} />
+            <h2>
+              {t("Parlons de vos bovins", "Let's talk about your cattle")}
+            </h2>
             <p>
               {t(
-                "Essayez un autre mot ou une autre catégorie.",
-                "Try another search or category.",
+                "Les références bovines ne sont pas encore publiées. Indiquez vos animaux, leur âge et vos besoins pour obtenir un conseil et un devis.",
+                "Cattle products are not listed yet. Share your animals, their age and your needs for advice and a quotation.",
               )}
             </p>
-            <button
-              className="button button-outline"
-              onClick={() => {
-                setQuery("");
-                setFilter(category || "all");
-              }}
+            <Link
+              className="button button-green"
+              href="/devis?categorie=bovins"
             >
-              {t("Réinitialiser", "Reset filters")}
-            </button>
+              {t("Demander un devis", "Request a quote")}
+              <Icon name="arrow" size={18} />
+            </Link>
           </div>
+        ) : (
+          shown.length === 0 && (
+            <div className="empty-state">
+              <Icon name="search" size={35} />
+              <h2>{t("Aucun produit trouvé", "No products found")}</h2>
+              <p>
+                {t(
+                  "Essayez un autre mot ou une autre catégorie.",
+                  "Try another search or category.",
+                )}
+              </p>
+              <button
+                className="button button-outline"
+                onClick={() => {
+                  setQuery("");
+                  setFilter(category || "all");
+                }}
+              >
+                {t("Réinitialiser", "Reset filters")}
+              </button>
+            </div>
+          )
         )}
       </section>
       <section className="finder-section">
         <div className="container">
-          <Finder products={products} />
+          <Finder products={products} category={category} />
         </div>
       </section>
       <FinalCTA />
@@ -690,15 +785,6 @@ export function ProductDetail({
               {t("Demander un devis", "Request a quote")}
               <Icon name="arrow" size={18} />
             </Link>
-            <WhatsAppButton
-              secondary
-              subject={t(
-                `des informations sur ${p.name.fr}`,
-                `information about ${p.name.en}`,
-              )}
-            >
-              WhatsApp
-            </WhatsAppButton>
           </div>
           <p className="small-note">
             <Icon name="truck" size={17} />
@@ -836,20 +922,31 @@ export function FAQ() {
 export function EnquiryForm({
   products,
   productId = "",
+  category: initialCategory,
 }: {
   products: Product[];
   productId?: string;
+  category?: Category;
 }) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
   const initial = products.find((p) => p.id === productId);
-  const [category, setCategory] = useState(initial?.category || "aquaculture");
+  const [category, setCategory] = useState(
+    initial?.category || initialCategory || "aquaculture",
+  );
   const [product, setProduct] = useState(initial?.id || "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
+  const successRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (reference) successRef.current?.focus();
+    else if (error) errorRef.current?.focus();
+  }, [reference, error]);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     const form = new FormData(e.currentTarget);
@@ -899,7 +996,12 @@ export function EnquiryForm({
   }
   if (reference)
     return (
-      <div className="form-success" role="status">
+      <div
+        ref={successRef}
+        tabIndex={-1}
+        className="form-success"
+        role="status"
+      >
         <span className="success-icon">
           <Icon name="check" size={32} />
         </span>
@@ -925,7 +1027,18 @@ export function EnquiryForm({
       </div>
     );
   return (
-    <form className="enquiry-form" onSubmit={submit}>
+    <form
+      className="enquiry-form"
+      onSubmit={submit}
+      aria-busy={busy}
+      onInvalidCapture={(event) => {
+        (event.target as HTMLInputElement).setAttribute("aria-invalid", "true");
+      }}
+      onInput={(event) => {
+        const field = event.target as HTMLInputElement;
+        if (field.validity?.valid) field.removeAttribute("aria-invalid");
+      }}
+    >
       <h2>
         {t("Dites-nous ce dont vous avez besoin.", "Tell us what you need.")}
       </h2>
@@ -1048,11 +1161,12 @@ export function EnquiryForm({
         </span>
       </label>
       {error && (
-        <p role="alert" className="form-error">
+        <p ref={errorRef} tabIndex={-1} role="alert" className="form-error">
           {error}
         </p>
       )}
       <button type="submit" disabled={busy} className="button button-green">
+        {busy && <span className="button-spinner" aria-hidden="true" />}
         {busy
           ? t("Envoi en cours…", "Sending…")
           : t("Envoyer ma demande", "Send my enquiry")}
@@ -1072,10 +1186,12 @@ export function Contact({
   products,
   quote = false,
   productId,
+  category,
 }: {
   products: Product[];
   quote?: boolean;
   productId?: string;
+  category?: Category;
 }) {
   const l = useLocale(),
     t = (fr: string, en: string) => (l === "fr" ? fr : en);
@@ -1152,7 +1268,12 @@ export function Contact({
             </a>
           </div>
         </aside>
-        <EnquiryForm products={products} productId={productId} />
+        <EnquiryForm
+          key={productId || category || "general"}
+          products={products}
+          productId={productId}
+          category={category}
+        />
       </section>
       <section className="container map-section">
         <iframe
@@ -1233,14 +1354,14 @@ export function About() {
           <Icon name="leaf" size={45} />
           <h2>
             {t(
-              "Aquaculture.\nVolaille.\nÉlevage porcin.",
-              "Aquaculture.\nPoultry.\nPig farming.",
+              "Aquaculture.\nVolaille.\nÉlevage porcin.\nBovins.",
+              "Aquaculture.\nPoultry.\nPig farming.\nCows.",
             )}
           </h2>
           <p>
             {t(
-              "Trois filières, un même engagement : vous aider à choisir une alimentation adaptée.",
-              "Three farming sectors, one commitment: helping you choose suitable nutrition.",
+              "Quatre filières, un même engagement : vous aider à choisir une alimentation adaptée.",
+              "Four farming sectors, one commitment: helping you choose suitable nutrition.",
             )}
           </p>
         </div>

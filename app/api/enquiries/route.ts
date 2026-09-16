@@ -1,3 +1,4 @@
+import { categories } from "@/lib/data";
 import { randomUUID } from "node:crypto";
 import { limited, sameOrigin } from "@/lib/auth";
 import { mutateStore, readStore } from "@/lib/store";
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     location.length < 2 ||
     message.length < 5 ||
     data.consent !== true ||
-    !["aquaculture", "volaille", "porcs", "autre"].includes(category)
+    !(categories.some((item) => item.id === category) || category === "autre")
   )
     return Response.json(
       { error: "Please check your details and privacy consent." },

@@ -412,6 +412,11 @@ export function Credits() {
           </a>
         </p>
         <p>
+          <a href="https://unsplash.com/photos/VCFoC-5aw8s">
+            {l === "fr" ? "Bovins" : "Cows"}: Brooke Balentine, Unsplash.
+          </a>
+        </p>
+        <p>
           <a href="https://unsplash.com/license">Unsplash License</a>
         </p>
       </div>
