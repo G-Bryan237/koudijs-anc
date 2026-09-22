@@ -2,6 +2,14 @@
 
 Bilingual Next.js website and protected administration dashboard for the KOUDIJS distributor in Yaoundé.
 
+## Screen view
+
+### Homepage
+
+[![Koudijs Animal Nutrition Cameroon homepage](docs/screenshots/live-homepage.png)](https://koudijs-anc.vercel.app/)
+
+Desktop screenshot of the [live preview](https://koudijs-anc.vercel.app/).
+
 ## Run locally
 
 Requires Node.js 20.9 or later.
